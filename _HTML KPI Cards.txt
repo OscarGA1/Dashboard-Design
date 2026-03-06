@@ -1,0 +1,117 @@
+_HTML KPI Cards =
+VAR _in      = [Total IN]
+VAR _out     = [TOTAL OUT]
+VAR _ratio   = [Ratio IN/OUT]
+VAR _balance = [Balance IN vs OUT]
+
+-- Ratio > 1 = VERDE (bueno), Ratio <= 1 = ROJO (malo)
+VAR _ratioClase  = IF(_ratio > 1, "card amber", "card amber warning")
+VAR _ratioBadge  = IF(_ratio > 1, "<span class='badge ok'>&#9650; Bajo control</span>", "<span class='badge alert'>&#9660; OUT supera IN</span>")
+VAR _ratioBanner = IF(_ratio > 1, "", "<div class='warn-banner'><span class='warn-dot'></span>Ratio &lt; 1 - Revisar egresos</div>")
+VAR _ratioSpark  = IF(_ratio > 1, "#D1D5DB", "#FCA5A5")
+
+VAR _balanceBadge = IF(_balance >= 0, "<span class='badge ok'>&#9650; Positivo</span>", "<span class='badge alert'>&#9660; Negativo</span>")
+VAR _balanceClase = IF(_balance >= 0, "card balance", "card balance warning")
+
+RETURN
+"<!DOCTYPE html><html lang='es'><head><meta charset='UTF-8'><link href='https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap' rel='stylesheet'><style>" &
+"*{margin:0;padding:0;box-sizing:border-box;}" &
+
+-- body ocupa el 100% del iframe de Power BI, sin scroll
+"html,body{height:100%;width:100%;overflow:hidden;font-family:'DM Sans',sans-serif;background:#F0F2F5;}" &
+
+-- grid ocupa toda la altura disponible
+".grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:10px;height:100vh;}" &
+
+-- card se estira para llenar la celda del grid
+".card{background:#FFFFFF;border-radius:12px;padding:14px 16px;position:relative;overflow:hidden;border:1px solid rgba(99,102,241,0.08);box-shadow:0 1px 3px rgba(0,0,0,0.04),0 4px 12px rgba(99,102,241,0.05);transition:transform 0.2s ease,box-shadow 0.2s ease;cursor:default;display:flex;flex-direction:column;justify-content:space-between;}" &
+".card:hover{transform:translateY(-2px);box-shadow:0 4px 16px rgba(99,102,241,0.12);}" &
+".card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:12px 12px 0 0;}" &
+".card.indigo::before{background:#6366F1;}" &
+".card.emerald::before{background:#10B981;}" &
+".card.amber::before{background:#F59E0B;}" &
+".card.balance::before{background:#8B5CF6;}" &
+
+-- warning state
+".card.warning{background:#FFF7F7;border-color:rgba(239,68,68,0.18);box-shadow:0 1px 3px rgba(239,68,68,0.06),0 4px 16px rgba(239,68,68,0.1);}" &
+".card.warning::before{background:#EF4444;}" &
+".card.warning .card-label{color:#F87171;}" &
+".card.warning .card-value{color:#DC2626;}" &
+".card.warning .card-sub{color:#FCA5A5;}" &
+".card.warning .icon-wrap{background:rgba(239,68,68,0.1)!important;animation:pulse-warn 2.4s ease-in-out infinite;}" &
+".card.warning .icon-wrap svg{stroke:#EF4444!important;}" &
+"@keyframes pulse-warn{0%,100%{opacity:1;}50%{opacity:0.55;}}" &
+
+-- warn banner
+".warn-banner{display:none;align-items:center;gap:5px;margin-top:6px;padding:4px 8px;background:rgba(239,68,68,0.08);border-radius:7px;font-size:10px;font-weight:600;color:#DC2626;letter-spacing:0.03em;}" &
+".card.warning .warn-banner{display:flex;}" &
+".warn-dot{width:5px;height:5px;border-radius:50%;background:#EF4444;flex-shrink:0;animation:blink 1.4s ease-in-out infinite;}" &
+"@keyframes blink{0%,100%{opacity:1;}50%{opacity:0.2;}}" &
+
+-- tipografia escalada con clamp para adaptarse a la altura
+".card-label{font-size:clamp(9px,1vh,11px);font-weight:500;letter-spacing:0.07em;text-transform:uppercase;color:#9CA3AF;margin-bottom:6px;}" &
+".card-value{font-family:'DM Mono',monospace;font-size:clamp(16px,2.4vh,26px);font-weight:500;color:#111827;line-height:1;margin-bottom:8px;letter-spacing:-0.5px;}" &
+".card-footer{display:flex;align-items:center;gap:5px;flex-wrap:wrap;}" &
+".card-sub{font-size:clamp(9px,1vh,11px);color:#9CA3AF;font-weight:400;}" &
+
+-- badges
+".badge{display:inline-flex;align-items:center;gap:3px;font-size:clamp(9px,1vh,11px);font-weight:600;padding:2px 6px;border-radius:20px;letter-spacing:0.01em;}" &
+".badge.neutral{background:rgba(156,163,175,0.12);color:#9CA3AF;}" &
+".badge.ok{background:rgba(16,185,129,0.1);color:#059669;}" &
+".badge.alert{background:rgba(239,68,68,0.12);color:#DC2626;}" &
+
+-- icono
+".icon-wrap{position:absolute;top:14px;right:14px;width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;}" &
+".card.indigo .icon-wrap{background:rgba(99,102,241,0.1);}" &
+".card.emerald .icon-wrap{background:rgba(16,185,129,0.1);}" &
+".card.amber .icon-wrap{background:rgba(245,158,11,0.1);}" &
+".card.balance .icon-wrap{background:rgba(139,92,246,0.1);}" &
+".icon-wrap svg{width:13px;height:13px;}" &
+".card.indigo .icon-wrap svg{stroke:#6366F1;}" &
+".card.emerald .icon-wrap svg{stroke:#10B981;}" &
+".card.amber .icon-wrap svg{stroke:#F59E0B;}" &
+".card.balance .icon-wrap svg{stroke:#8B5CF6;}" &
+
+-- sparkline oculta si hay poco espacio vertical
+".sparkline{flex:1;min-height:20px;max-height:36px;}" &
+".sparkline svg{width:100%;height:100%;overflow:visible;}" &
+"</style></head><body><div class='grid'>" &
+
+-- CARD 1: Total IN
+"<div class='card indigo'>" &
+"<div class='icon-wrap'><svg viewBox='0 0 24 24' fill='none' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><line x1='12' y1='19' x2='12' y2='5'/><polyline points='5 12 12 5 19 12'/></svg></div>" &
+"<div class='card-label'>Total IN</div>" &
+"<div class='card-value'>" & FORMAT(_in, "#,##0.00") & "</div>" &
+"<div class='sparkline'><svg viewBox='0 0 100 28' preserveAspectRatio='none'><path d='M0,14 L25,14 L50,14 L75,14 L100,14' fill='none' stroke='#D1D5DB' stroke-width='1.8' stroke-dasharray='4 3'/></svg></div>" &
+"<div class='card-footer'><span class='badge neutral'>Entradas</span><span class='card-sub'>0-Measure</span></div>" &
+"</div>" &
+
+-- CARD 2: Total OUT
+"<div class='card emerald'>" &
+"<div class='icon-wrap'><svg viewBox='0 0 24 24' fill='none' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><line x1='12' y1='5' x2='12' y2='19'/><polyline points='19 12 12 19 5 12'/></svg></div>" &
+"<div class='card-label'>Total OUT</div>" &
+"<div class='card-value'>" & FORMAT(_out, "#,##0.00") & "</div>" &
+"<div class='sparkline'><svg viewBox='0 0 100 28' preserveAspectRatio='none'><path d='M0,14 L25,14 L50,14 L75,14 L100,14' fill='none' stroke='#D1D5DB' stroke-width='1.8' stroke-dasharray='4 3'/></svg></div>" &
+"<div class='card-footer'><span class='badge neutral'>Salidas</span><span class='card-sub'>0-Measure</span></div>" &
+"</div>" &
+
+-- CARD 3: Ratio IN/OUT  (verde si > 1, rojo si <= 1)
+"<div class='" & _ratioClase & "'>" &
+"<div class='icon-wrap'><svg viewBox='0 0 24 24' fill='none' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><circle cx='12' cy='12' r='10'/><line x1='12' y1='8' x2='12' y2='12'/><line x1='12' y1='16' x2='12.01' y2='16'/></svg></div>" &
+"<div class='card-label'>Ratio IN / OUT</div>" &
+"<div class='card-value'>" & FORMAT(_ratio, "0.00") & "</div>" &
+"<div class='sparkline'><svg viewBox='0 0 100 28' preserveAspectRatio='none'><path d='M0,14 L25,14 L50,14 L75,14 L100,14' fill='none' stroke='" & _ratioSpark & "' stroke-width='1.8' stroke-dasharray='4 3'/></svg></div>" &
+"<div class='card-footer'>" & _ratioBadge & "</div>" &
+_ratioBanner &
+"</div>" &
+
+-- CARD 4: Balance IN vs OUT
+"<div class='" & _balanceClase & "'>" &
+"<div class='icon-wrap'><svg viewBox='0 0 24 24' fill='none' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><line x1='18' y1='20' x2='18' y2='10'/><line x1='12' y1='20' x2='12' y2='4'/><line x1='6' y1='20' x2='6' y2='14'/></svg></div>" &
+"<div class='card-label'>Balance IN vs OUT</div>" &
+"<div class='card-value'>" & FORMAT(_balance, "#,##0.00") & "</div>" &
+"<div class='sparkline'><svg viewBox='0 0 100 28' preserveAspectRatio='none'><path d='M0,14 L25,14 L50,14 L75,14 L100,14' fill='none' stroke='#D1D5DB' stroke-width='1.8' stroke-dasharray='4 3'/></svg></div>" &
+"<div class='card-footer'>" & _balanceBadge & "<span class='card-sub'>0-Measure</span></div>" &
+"</div>" &
+
+"</div></body></html>"
