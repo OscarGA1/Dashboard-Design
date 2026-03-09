@@ -1,7 +1,16 @@
 Mapa_Nidec_HTML = 
+VAR _Tabla =
+    FILTER (
+        'General Information',
+        NOT ISBLANK ( 'General Information'[Latitude] ) &&
+        NOT ISBLANK ( 'General Information'[Longitude] ) &&
+        'General Information'[Latitude] <> 0 &&
+        'General Information'[Longitude] <> 0
+    )
+
 VAR _DataPoints =
     CONCATENATEX (
-        'General Information',
+        _Tabla,
         VAR _lat      = 'General Information'[Latitude]
         VAR _lon      = 'General Information'[Longitude]
         VAR _type     = 'General Information'[Type]
@@ -129,14 +138,12 @@ VAR _HTML =
     "document.getElementById('cnt').textContent=markers.length;" &
     "var grp=L.featureGroup(markers);" &
     "if(grp.getLayers().length>0){map.fitBounds(grp.getBounds().pad(0.15));}" &
-    "function updateCnt(){" &
-    "document.getElementById('cnt').textContent=allMarkers.filter(function(x){return map.hasLayer(x.marker);}).length;}" &
+    "function updateCnt(){document.getElementById('cnt').textContent=allMarkers.filter(function(x){return map.hasLayer(x.marker);}).length;}" &
     "function toggleType(t){" &
     "typeOn[t]=!typeOn[t];" &
     "document.getElementById('btn'+t).className=typeOn[t]?'tbtn tbtn-on-'+t:'tbtn tbtn-off';" &
-    "allMarkers.forEach(function(x){" &
-    "if(x.type===t){typeOn[t]?map.addLayer(x.marker):map.removeLayer(x.marker);}" &
-    "});updateCnt();}" &
+    "allMarkers.forEach(function(x){if(x.type===t){typeOn[t]?map.addLayer(x.marker):map.removeLayer(x.marker);}});" &
+    "updateCnt();}" &
     "var sb=document.getElementById('searchBox'),sr=document.getElementById('searchResults');" &
     "sb.addEventListener('input',function(){" &
     "var q=this.value.toLowerCase().trim();" &
@@ -147,14 +154,10 @@ VAR _HTML =
     "hits.forEach(function(x){" &
     "var d=document.createElement('div');d.className='sr-item';" &
     "d.innerHTML='<div class=""sr-dot sr-dot-'+x.type+'""></div><div><div class=""sr-name"">'+x.displayName+'</div><div class=""sr-site"">'+x.displaySite+'</div></div>';" &
-    "d.onclick=function(){" &
-    "map.setView(x.marker.getLatLng(),10,{animate:true});" &
-    "setTimeout(function(){x.marker.openPopup();},500);" &
-    "sb.value=x.displayName;sr.style.display='none';" &
-    "};sr.appendChild(d);});" &
+    "d.onclick=function(){map.setView(x.marker.getLatLng(),10,{animate:true});setTimeout(function(){x.marker.openPopup();},500);sb.value=x.displayName;sr.style.display='none';};" &
+    "sr.appendChild(d);});" &
     "sr.style.display='block';});" &
-    "document.addEventListener('click',function(e){" &
-    "if(!document.getElementById('searchWrap').contains(e.target)){sr.style.display='none';}});" &
+    "document.addEventListener('click',function(e){if(!document.getElementById('searchWrap').contains(e.target)){sr.style.display='none';}});" &
     "</script></body></html>"
 
 RETURN _HTML
