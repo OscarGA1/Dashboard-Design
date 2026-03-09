@@ -1,0 +1,23 @@
+IconoGeoJSON =
+VAR _categoria = SELECTEDVALUE('TuTabla'[Category])
+
+VAR _svgPlant = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSI+PHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiByeD0iMTIiIGZpbGw9IiMxRTNBNUYiLz48cmVjdCB4PSI4IiB5PSIzMiIgd2lkdGg9IjQ4IiBoZWlnaHQ9IjI0IiByeD0iMiIgZmlsbD0iIzRBOTBEOSIvPjxyZWN0IHg9IjE0IiB5PSIyMiIgd2lkdGg9IjEwIiBoZWlnaHQ9IjE0IiBmaWxsPSIjNEE5MEQ5Ii8+PHJlY3QgeD0iMjgiIHk9IjE2IiB3aWR0aD0iMTAiIGhlaWdodD0iMjAiIGZpbGw9IiM0QTkwRDkiLz48cmVjdCB4PSI0MiIgeT0iMjYiIHdpZHRoPSIxMCIgaGVpZ2h0PSIxMCIgZmlsbD0iIzRBOTBEOSIvPjxyZWN0IHg9IjEyIiB5PSIzOCIgd2lkdGg9IjYiIGhlaWdodD0iMTAiIHJ4PSIxIiBmaWxsPSIjMUUzQTVGIi8+PHJlY3QgeD0iMjIiIHk9IjM4IiB3aWR0aD0iNiIgaGVpZ2h0PSIxMCIgcng9IjEiIGZpbGw9IiMxRTNBNUYiLz48cmVjdCB4PSIzOCIgeT0iMzgiIHdpZHRoPSI2IiBoZWlnaHQ9IjEwIiByeD0iMSIgZmlsbD0iIzFFM0E1RiIvPjxyZWN0IHg9IjQ4IiB5PSIzOCIgd2lkdGg9IjYiIGhlaWdodD0iMTAiIHJ4PSIxIiBmaWxsPSIjMUUzQTVGIi8+PHJlY3QgeD0iMTQiIHk9IjEwIiB3aWR0aD0iNCIgaGVpZ2h0PSIxNCIgcng9IjIiIGZpbGw9IiNBMEM0RTgiLz48cmVjdCB4PSIyOCIgeT0iNiIgd2lkdGg9IjQiIGhlaWdodD0iMTIiIHJ4PSIyIiBmaWxsPSIjQTBDNEU4Ii8+PC9zdmc+"
+
+VAR _svgWH = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSI+PHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiByeD0iMTIiIGZpbGw9IiMxQTQ3MzEiLz48cG9seWdvbiBwb2ludHM9IjMyLDggNTgsMjYgNiwyNiIgZmlsbD0iIzJEN0E1MCIvPjxyZWN0IHg9IjgiIHk9IjI2IiB3aWR0aD0iNDgiIGhlaWdodD0iMzAiIHJ4PSIxIiBmaWxsPSIjMkQ3QTUwIi8+PHJlY3QgeD0iMjQiIHk9IjM2IiB3aWR0aD0iMTYiIGhlaWdodD0iMjAiIHJ4PSIyIiBmaWxsPSIjMUE0NzMxIi8+PHJlY3QgeD0iMTAiIHk9IjMwIiB3aWR0aD0iMTAiIGhlaWdodD0iMTAiIHJ4PSIxIiBmaWxsPSIjMUE0NzMxIi8+PHJlY3QgeD0iNDQiIHk9IjMwIiB3aWR0aD0iMTAiIGhlaWdodD0iMTAiIHJ4PSIxIiBmaWxsPSIjMUE0NzMxIi8+PGxpbmUgeDE9IjMyIiB5MT0iMzYiIHgyPSIzMiIgeTI9IjU2IiBzdHJva2U9IiMyRDdBNTAiIHN0cm9rZS13aWR0aD0iMS41Ii8+PC9zdmc+"
+
+VAR _icono =
+    SWITCH(
+        TRUE(),
+        _categoria = "Plant", _svgPlant,
+        _categoria = "WH",    _svgWH,
+        BLANK()
+    )
+
+VAR _lat = SELECTEDVALUE('TuTabla'[Latitude])
+VAR _lon = SELECTEDVALUE('TuTabla'[Longitude])
+
+RETURN
+IF(
+    NOT ISBLANK(_icono),
+    "{""type"":""Feature"",""geometry"":{""type"":""Point"",""coordinates"":[" & _lon & "," & _lat & "]},""properties"":{""icon"":""" & _icono & """}}"
+)
