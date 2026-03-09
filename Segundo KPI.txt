@@ -11,7 +11,7 @@ VAR _ratioBanner = IF(_ratio > 1, "", "<div class='warn-banner'><span class='war
 VAR _ratioSpark  = IF(_ratio > 1, "#D1D5DB", "#FCA5A5")
 
 VAR _balanceBadge = IF(_balance >= 0, "<span class='badge ok'>&#9650; Positivo</span>", "<span class='badge alert'>&#9660; Negativo</span>")
-VAR _balanceClase = IF(_balance >= 0, "card balnance", "card balance warning")
+VAR _balanceClase = IF(_balance >= 0, "card balance", "card balance warning")
 
 RETURN
 "<!DOCTYPE html><html lang='es'><head><meta charset='UTF-8'><link href='https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap' rel='stylesheet'><style>" &

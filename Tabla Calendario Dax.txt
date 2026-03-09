@@ -1,0 +1,15 @@
+Calendario =
+VAR FechaInicio = DATE(2020, 1, 1)
+VAR FechaFin = DATE(2026, 12, 31)
+RETURN
+ADDCOLUMNS(
+    CALENDAR(FechaInicio, FechaFin),
+    "Año",                YEAR([Date]),
+    "Mes",                MONTH([Date]),
+    "Nombre Mes",         FORMAT([Date], "MMMM"),
+    "Mes-Nombre",         MONTH([Date]) & ".- " & FORMAT([Date], "MMMM"),
+    "Trimestre",          "Q" & QUARTER([Date]),
+    "Día",                DAY([Date]),
+    "Nombre Día",         FORMAT([Date], "DDDD"),
+    "Es Fin de Semana",   WEEKDAY([Date], 2) >= 6
+)
