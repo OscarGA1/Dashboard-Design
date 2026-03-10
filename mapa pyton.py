@@ -29,27 +29,7 @@ VAR _DataPoints =
         VAR _nameLow  = LOWER ( _locname )
         VAR _siteLow  = LOWER ( _site )
         RETURN
-            "(function(){" &
-                "var m=L.marker([" & _lat & "," & _lon & "],{icon:makeIcon('" & _itype & "')}).addTo(map);" &
-                "m.bindPopup(" &
-                    "'<div class=""pc"">" &
-                        "<div class=""pc-header pc-" & _itypeLow & """>" &
-                            "<span class=""pc-badge"">" & _itype & "</span>" &
-                            "<div class=""pc-site"">" & _site & "</div>" &
-                            "<div class=""pc-name"">" & _locname & "</div>" &
-                        "</div>" &
-                        "<div class=""pc-body"">" &
-                            "<div class=""pc-row""><span class=""pc-label"">💰 Inventory Cost</span><span class=""pc-val"">" & _cost & "</span></div>" &
-                            "<div class=""pc-sep""></div>" &
-                            "<div class=""pc-row""><span class=""pc-label"">📈 Total Sales</span><span class=""pc-val kpi-green"">" & _sales & "</span></div>" &
-                        "</div>" &
-                    "</div>'," &
-                    "{maxWidth:260,minWidth:220}" &
-                ");" &
-                "m.on('mouseover',function(){this.openPopup();});" &
-                "markers.push(m);" &
-                "allMarkers.push({marker:m,name:'" & _nameLow & "',site:'" & _siteLow & "',type:'" & _itype & "',displayName:'" & _locname & "',displaySite:'" & _site & "'});" &
-            "})();",
+            "rawData.push({lat:" & _lat & ",lon:" & _lon & ",type:'" & _itype & "',typeLow:'" & _itypeLow & "',site:'" & _site & "',name:'" & _locname & "',nameLow:'" & _nameLow & "',siteLow:'" & _siteLow & "',cost:'" & _cost & "',sales:'" & _sales & "'});",
         " "
     )
 
@@ -74,11 +54,6 @@ VAR _HTML =
     "*{margin:0;padding:0;box-sizing:border-box;}" &
     "body{font-family:Segoe UI,sans-serif;}" &
     "#map{height:100vh;width:100vw;}" &
-    "#loader{position:fixed;inset:0;background:rgba(240,244,248,0.97);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;}" &
-    ".ld-spin{width:40px;height:40px;border:4px solid #dde;border-top:4px solid #1E3A5F;border-radius:50%;animation:spin 0.9s linear infinite;}" &
-    ".ld-txt{font-size:14px;font-weight:600;color:#1E3A5F;}" &
-    ".ld-sub{font-size:11px;color:#aaa;}" &
-    "@keyframes spin{to{transform:rotate(360deg);}}" &
     ".icon-wrap{width:40px;height:40px;position:relative;display:flex;align-items:center;justify-content:center;}" &
     ".pulse-ring{position:absolute;inset:0;border-radius:50%;animation:pulse 2.4s ease-out infinite;pointer-events:none;}" &
     ".pulse-Plant{border:2px solid rgba(58,123,213,0.8);}" &
@@ -160,7 +135,6 @@ VAR _HTML =
     ".vc-val-g{font-size:13px;font-weight:700;color:#1A7A40;}" &
     ".vc-div{width:1px;background:#f0f0f0;margin:0 10px;}" &
     "</style></head><body>" &
-    "<div id='loader'><div class='ld-spin'></div><div class='ld-txt'>Loading map...</div><div class='ld-sub'>Preparing locations</div></div>" &
     "<div id='map'></div>" &
     "<div id='searchWrap'><span id='searchIcon'>🔍</span><input id='searchBox' type='text' placeholder='Search location or site...' autocomplete='off'/><div id='searchResults'></div></div>" &
     "<div id='toggleWrap'>" &
@@ -182,11 +156,12 @@ VAR _HTML =
     "<div id='vList'></div>" &
     "</div>" &
     "<script>" &
-    "function hideLoader(){document.getElementById('loader').style.display='none';}" &
-    "setTimeout(hideLoader,5000);" &
+    "var rawData=[];var virtualData=[];var virtualVisible=false;" &
+    "var typeOn={WH:true,Plant:true,Office:true,'3PL':true};" &
+    _DataPoints &
+    _VirtualCards &
     "var map=L.map('map',{zoomControl:false}).setView([25.7,-100.3],4);" &
     "L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{attribution:'© Nidec'}).addTo(map);" &
-    "map.once('load',hideLoader);" &
     "L.control.zoom({position:'bottomleft'}).addTo(map);" &
     "function makeIcon(t){" &
     "var ic='icon-'+t;var pc='pulse-'+t;" &
@@ -198,34 +173,76 @@ VAR _HTML =
     "};" &
     "var sv=svgs[t]||svgs['Plant'];" &
     "return L.divIcon({html:'<div class=""icon-wrap""><div class=""pulse-ring '+pc+'""></div><div class=""icon-core '+ic+'"">'+sv+'</div></div>',className:'',iconSize:[40,40],iconAnchor:[20,20],popupAnchor:[0,-24]});}" &
-    "var markers=[];var allMarkers=[];var typeOn={WH:true,Plant:true,Office:true,'3PL':true};" &
-    "var virtualData=[];var virtualVisible=false;" &
-    _DataPoints &
-    _VirtualCards &
-    "hideLoader();" &
-    "document.getElementById('cnt').textContent=markers.length;" &
-    "var grp=L.featureGroup(markers);" &
+    "function makeClusterIcon(n){" &
+    "return L.divIcon({html:'<div style=""background:rgba(30,58,95,0.88);color:white;border-radius:50%;width:38px;height:38px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;box-shadow:0 3px 12px rgba(0,0,0,0.3);border:2px solid rgba(255,255,255,0.4)"">'+n+'</div>',className:'',iconSize:[38,38],iconAnchor:[19,19]});}" &
+    "var allMarkers=[];var markerObjects=[];" &
+    "rawData.forEach(function(d){" &
+    "if(!typeOn[d.type])return;" &
+    "var m=L.marker([d.lat,d.lon],{icon:makeIcon(d.type)}).addTo(map);" &
+    "m.bindPopup('<div class=""pc""><div class=""pc-header pc-'+d.typeLow+'""><span class=""pc-badge"">'+d.type+'</span><div class=""pc-site"">'+d.site+'</div><div class=""pc-name"">'+d.name+'</div></div><div class=""pc-body""><div class=""pc-row""><span class=""pc-label"">💰 Inventory Cost</span><span class=""pc-val"">'+d.cost+'</span></div><div class=""pc-sep""></div><div class=""pc-row""><span class=""pc-label"">📈 Total Sales</span><span class=""pc-val kpi-green"">'+d.sales+'</span></div></div></div>',{maxWidth:260,minWidth:220});" &
+    "m.on('mouseover',function(){this.openPopup();});" &
+    "allMarkers.push({marker:m,name:d.nameLow,site:d.siteLow,type:d.type,displayName:d.name,displaySite:d.site});" &
+    "markerObjects.push(m);" &
+    "});" &
+    "document.getElementById('cnt').textContent=markerObjects.length;" &
+    "var grp=L.featureGroup(markerObjects);" &
     "if(grp.getLayers().length>0){map.fitBounds(grp.getBounds().pad(0.15));}" &
+
+    "/* ── Clustering manual ── */" &
+    "var clusterMarkers=[];" &
+    "function getPixelPos(latlng){return map.latLngToContainerPoint(latlng);}" &
+    "function doClustering(){" &
+    "clusterMarkers.forEach(function(c){map.removeLayer(c);});clusterMarkers=[];" &
+    "var zoom=map.getZoom();if(zoom>=9){return;}" &
+    "var radius=zoom<=4?120:zoom<=6?90:60;" &
+    "var visible=allMarkers.filter(function(x){return map.hasLayer(x.marker);});" &
+    "var used=[];" &
+    "visible.forEach(function(a,i){" &
+    "if(used[i])return;" &
+    "var group=[a];used[i]=true;" &
+    "var pa=getPixelPos(a.marker.getLatLng());" &
+    "visible.forEach(function(b,j){" &
+    "if(i===j||used[j])return;" &
+    "var pb=getPixelPos(b.marker.getLatLng());" &
+    "var dx=pa.x-pb.x,dy=pa.y-pb.y;" &
+    "if(Math.sqrt(dx*dx+dy*dy)<radius){group.push(b);used[j]=true;}" &
+    "});" &
+    "if(group.length>1){" &
+    "group.forEach(function(x){map.removeLayer(x.marker);});" &
+    "var avgLat=group.reduce(function(s,x){return s+x.marker.getLatLng().lat;},0)/group.length;" &
+    "var avgLon=group.reduce(function(s,x){return s+x.marker.getLatLng().lng;},0)/group.length;" &
+    "var cm=L.marker([avgLat,avgLon],{icon:makeClusterIcon(group.length)}).addTo(map);" &
+    "cm.on('click',function(){" &
+    "var bounds=L.latLngBounds(group.map(function(x){return x.marker.getLatLng();}));" &
+    "map.fitBounds(bounds.pad(0.3));});" &
+    "clusterMarkers.push(cm);" &
+    "}});" &
+    "}" &
+    "map.on('zoomend moveend',function(){" &
+    "allMarkers.forEach(function(x){if(typeOn[x.type]){map.addLayer(x.marker);}});" &
+    "doClustering();" &
+    "});" &
+    "doClustering();" &
+
     "function updateCnt(){document.getElementById('cnt').textContent=allMarkers.filter(function(x){return map.hasLayer(x.marker);}).length;}" &
     "function toggleType(t){" &
     "typeOn[t]=!typeOn[t];" &
     "document.getElementById('btn'+t).className=typeOn[t]?'tbtn tbtn-on-'+t:'tbtn tbtn-off';" &
     "allMarkers.forEach(function(x){if(x.type===t){typeOn[t]?map.addLayer(x.marker):map.removeLayer(x.marker);}});" &
-    "updateCnt();}" &
+    "doClustering();updateCnt();}" &
     "function toggleVirtual(){" &
     "virtualVisible=!virtualVisible;" &
     "var panel=document.getElementById('virtualPanel');" &
     "var btn=document.getElementById('btnVirtual');" &
     "if(virtualVisible){" &
-    "panel.style.display='flex';" &
-    "btn.className='tbtn tbtn-on-Virtual';" &
+    "panel.style.display='flex';btn.className='tbtn tbtn-on-Virtual';" &
     "var list=document.getElementById('vList');list.innerHTML='';" &
     "if(!virtualData.length){list.innerHTML='<p style=""padding:20px;color:#aaa;text-align:center;font-size:13px;"">No virtual locations</p>';return;}" &
     "virtualData.forEach(function(v){" &
     "var c=document.createElement('div');c.className='vc';" &
     "c.innerHTML='<div class=""vc-top""><div class=""vc-site"">'+v.site+'</div><div class=""vc-name"">'+v.name+'</div></div><div class=""vc-body""><div class=""vc-kpi""><div class=""vc-label"">💰 Inventory Cost</div><div class=""vc-val"">'+v.cost+'</div></div><div class=""vc-div""></div><div class=""vc-kpi""><div class=""vc-label"">📈 Total Sales</div><div class=""vc-val-g"">'+v.sales+'</div></div></div>';" &
-    "list.appendChild(c);});" &
-    "}else{panel.style.display='none';btn.className='tbtn tbtn-off';}}" &
+    "list.appendChild(c);});}" &
+    "else{panel.style.display='none';btn.className='tbtn tbtn-off';}}" &
     "var sb=document.getElementById('searchBox'),sr=document.getElementById('searchResults');" &
     "sb.addEventListener('input',function(){" &
     "var q=this.value.toLowerCase().trim();sr.innerHTML='';" &
