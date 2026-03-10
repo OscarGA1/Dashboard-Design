@@ -5,7 +5,8 @@ VAR _Tabla =
         NOT ISBLANK ( 'General Information'[Latitude] ) &&
         NOT ISBLANK ( 'General Information'[Longitude] ) &&
         'General Information'[Latitude] <> 0 &&
-        'General Information'[Longitude] <> 0
+        'General Information'[Longitude] <> 0 &&
+        'General Information'[Type] <> "Virtual"
     )
 
 VAR _TablaVirtual =
@@ -68,17 +69,21 @@ VAR _VirtualCards =
 VAR _HTML =
     "data:text/html;charset=utf-8," &
     "<!DOCTYPE html><html><head><meta charset='UTF-8'>" &
-    "<link rel='stylesheet' href='https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'/>" &
-    "<script src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'></script>" &
+    "<link rel='stylesheet' href='https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css'/>" &
+    "<script src='https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js'></script>" &
     "<style>" &
     "*{margin:0;padding:0;box-sizing:border-box;}" &
-    "body{font-family:Segoe UI,sans-serif;}" &
+    "body{font-family:Segoe UI,sans-serif;background:#f0f4f8;}" &
     "#map{height:100vh;width:100vw;}" &
-    "#loader{position:fixed;inset:0;background:rgba(240,244,248,0.97);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;}" &
-    ".ld-spin{width:40px;height:40px;border:4px solid #dde;border-top:4px solid #1E3A5F;border-radius:50%;animation:spin 0.9s linear infinite;}" &
-    ".ld-txt{font-size:14px;font-weight:600;color:#1E3A5F;}" &
-    ".ld-sub{font-size:11px;color:#aaa;}" &
+
+    "/* Loader */" &
+    "#loader{position:fixed;inset:0;background:#f0f4f8;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;}" &
+    ".loader-spinner{width:44px;height:44px;border:4px solid #e0e8f0;border-top:4px solid #1E3A5F;border-radius:50%;animation:spin 0.9s linear infinite;}" &
     "@keyframes spin{to{transform:rotate(360deg);}}" &
+    ".loader-text{font-size:14px;font-weight:600;color:#1E3A5F;letter-spacing:0.5px;}" &
+    ".loader-sub{font-size:12px;color:#aaa;}" &
+
+    "/* Icons */" &
     ".icon-wrap{width:40px;height:40px;position:relative;display:flex;align-items:center;justify-content:center;}" &
     ".pulse-ring{position:absolute;inset:0;border-radius:50%;animation:pulse 2.4s ease-out infinite;pointer-events:none;}" &
     ".pulse-Plant{border:2px solid rgba(58,123,213,0.8);}" &
@@ -92,6 +97,8 @@ VAR _HTML =
     ".icon-3PL{background:linear-gradient(145deg,#7d3c00,#e67e22);}" &
     ".icon-Office{background:linear-gradient(145deg,#4a235a,#8e44ad);}" &
     ".icon-core svg{width:17px;height:17px;fill:white;display:block;}" &
+
+    "/* Popup */" &
     ".leaflet-popup-content-wrapper{padding:0;border-radius:14px;border:none;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,0.2);}" &
     ".leaflet-popup-content{margin:0!important;}" &
     ".leaflet-popup-tip-container{display:none;}" &
@@ -111,6 +118,8 @@ VAR _HTML =
     ".pc-label{font-size:11px;color:#999;font-weight:500;}" &
     ".pc-val{font-size:13px;font-weight:700;color:#1a1a1a;}" &
     ".kpi-green{color:#1A7A40;}" &
+
+    "/* Search */" &
     "#searchWrap{position:absolute;top:16px;left:50%;transform:translateX(-50%);z-index:1000;width:300px;}" &
     "#searchIcon{position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:13px;pointer-events:none;}" &
     "#searchBox{width:100%;padding:10px 16px 10px 38px;border:none;border-radius:24px;background:rgba(255,255,255,0.97);box-shadow:0 4px 20px rgba(0,0,0,0.22);font-size:13px;color:#1a1a1a;outline:none;}" &
@@ -118,51 +127,61 @@ VAR _HTML =
     ".sr-item{padding:10px 14px;cursor:pointer;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;gap:8px;transition:background 0.15s;}" &
     ".sr-item:hover{background:#f5f9ff;}" &
     ".sr-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}" &
-    ".sr-dot-Plant{background:#2D5A8E;}" &
-    ".sr-dot-WH{background:#2D7A50;}" &
+    ".sr-dot-Plant{background:#3a7bd5;}" &
+    ".sr-dot-WH{background:#27ae60;}" &
     ".sr-dot-3PL{background:#e67e22;}" &
     ".sr-dot-Office{background:#8e44ad;}" &
     ".sr-name{font-size:13px;font-weight:600;color:#1a1a1a;}" &
     ".sr-site{font-size:11px;color:#aaa;}" &
+
+    "/* Toggles */" &
     "#toggleWrap{position:absolute;top:16px;right:16px;z-index:1000;display:flex;gap:6px;flex-wrap:wrap;max-width:300px;justify-content:flex-end;}" &
-    ".tbtn{padding:8px 14px;border:none;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.15);transition:all 0.2s;}" &
+    ".tbtn{padding:7px 12px;border:none;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.15);transition:all 0.2s;}" &
     ".tbtn-on-Plant{background:linear-gradient(135deg,#1E3A5F,#3a7bd5);color:white;}" &
     ".tbtn-on-WH{background:linear-gradient(135deg,#1A4731,#27ae60);color:white;}" &
     ".tbtn-on-3PL{background:linear-gradient(135deg,#7d3c00,#e67e22);color:white;}" &
     ".tbtn-on-Office{background:linear-gradient(135deg,#4a235a,#8e44ad);color:white;}" &
     ".tbtn-on-Virtual{background:linear-gradient(135deg,#555,#95a5a6);color:white;}" &
     ".tbtn-off{background:rgba(255,255,255,0.75);color:#bbb;box-shadow:none;}" &
+
+    "/* Legend */" &
     ".legend{position:absolute;bottom:24px;right:16px;z-index:999;background:rgba(255,255,255,0.97);border-radius:12px;padding:12px 16px;box-shadow:0 4px 20px rgba(0,0,0,0.13);}" &
     ".legend-title{font-size:9px;font-weight:700;color:#bbb;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;}" &
     ".li{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:500;color:#444;margin-bottom:5px;}" &
     ".li:last-child{margin-bottom:0;}" &
     ".ld{width:10px;height:10px;border-radius:3px;}" &
-    ".ld-plant{background:linear-gradient(135deg,#1E3A5F,#3a7bd5);}" &
-    ".ld-wh{background:linear-gradient(135deg,#1A4731,#27ae60);}" &
-    ".ld-3pl{background:linear-gradient(135deg,#7d3c00,#e67e22);}" &
-    ".ld-office{background:linear-gradient(135deg,#4a235a,#8e44ad);}" &
+    ".ld-WH{background:linear-gradient(135deg,#1A4731,#27ae60);}" &
+    ".ld-3PL{background:linear-gradient(135deg,#7d3c00,#e67e22);}" &
+    ".ld-Office{background:linear-gradient(135deg,#4a235a,#8e44ad);}" &
+    ".ld-Plant{background:linear-gradient(135deg,#1E3A5F,#3a7bd5);}" &
+
+    "/* Counter */" &
     "#counter{position:absolute;bottom:24px;left:16px;z-index:999;background:rgba(255,255,255,0.97);border-radius:12px;padding:10px 16px;box-shadow:0 4px 20px rgba(0,0,0,0.13);font-size:12px;color:#777;}" &
     "#counter b{font-size:15px;color:#1E3A5F;}" &
-    "#virtualPanel{position:absolute;top:0;right:0;height:100%;width:300px;background:white;box-shadow:-6px 0 30px rgba(0,0,0,0.15);z-index:1001;display:none;flex-direction:column;}" &
-    "#vHeader{padding:16px 20px;background:linear-gradient(135deg,#555,#95a5a6);position:relative;}" &
-    "#vHeader h3{color:white;font-size:14px;font-weight:700;margin-bottom:2px;}" &
-    "#vHeader p{color:rgba(255,255,255,0.75);font-size:11px;}" &
-    "#vClose{position:absolute;top:12px;right:14px;background:none;border:none;color:white;font-size:20px;cursor:pointer;}" &
-    "#vList{overflow-y:auto;flex:1;padding:12px;}" &
+
+    "/* Virtual Panel */" &
+    "#virtualPanel{position:absolute;top:0;right:0;height:100%;width:300px;background:rgba(255,255,255,0.97);box-shadow:-6px 0 30px rgba(0,0,0,0.15);z-index:1001;display:none;flex-direction:column;}" &
+    "#virtualHeader{padding:18px 20px 14px;background:linear-gradient(135deg,#555,#95a5a6);position:relative;}" &
+    "#virtualHeader h3{color:white;font-size:14px;font-weight:700;margin-bottom:2px;}" &
+    "#virtualHeader p{color:rgba(255,255,255,0.75);font-size:11px;}" &
+    "#virtualClose{position:absolute;top:14px;right:16px;background:none;border:none;color:white;font-size:20px;cursor:pointer;}" &
+    "#virtualList{overflow-y:auto;flex:1;padding:12px;}" &
     ".vc{background:white;border-radius:10px;margin-bottom:10px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,0.08);border:1px solid #f0f0f0;}" &
-    ".vc-top{padding:10px 14px;background:#f8f9fa;}" &
+    ".vc-top{padding:10px 14px;background:linear-gradient(135deg,#f8f9fa,#eee);}" &
     ".vc-site{font-size:9px;font-weight:700;color:#999;letter-spacing:1.2px;text-transform:uppercase;margin-bottom:2px;}" &
     ".vc-name{font-size:13px;font-weight:700;color:#1a1a1a;}" &
     ".vc-body{padding:10px 14px;display:flex;}" &
     ".vc-kpi{flex:1;}" &
-    ".vc-label{font-size:10px;color:#aaa;}" &
+    ".vc-label{font-size:10px;color:#aaa;font-weight:500;}" &
     ".vc-val{font-size:13px;font-weight:700;color:#1a1a1a;}" &
-    ".vc-val-g{font-size:13px;font-weight:700;color:#1A7A40;}" &
+    ".vc-val-green{font-size:13px;font-weight:700;color:#1A7A40;}" &
     ".vc-div{width:1px;background:#f0f0f0;margin:0 10px;}" &
     "</style></head><body>" &
-    "<div id='loader'><div class='ld-spin'></div><div class='ld-txt'>Loading map...</div><div class='ld-sub'>Preparing locations</div></div>" &
+
+    "<div id='loader'><div class='loader-spinner'></div><div class='loader-text'>Loading map...</div><div class='loader-sub'>Preparing locations</div></div>" &
     "<div id='map'></div>" &
     "<div id='searchWrap'><span id='searchIcon'>🔍</span><input id='searchBox' type='text' placeholder='Search location or site...' autocomplete='off'/><div id='searchResults'></div></div>" &
+
     "<div id='toggleWrap'>" &
     "<button id='btnWH'      class='tbtn tbtn-on-WH'      onclick='toggleType(""WH"")'>🏬 WH</button>" &
     "<button id='btn3PL'     class='tbtn tbtn-on-3PL'     onclick='toggleType(""3PL"")'>🚚 3PL</button>" &
@@ -170,24 +189,30 @@ VAR _HTML =
     "<button id='btnPlant'   class='tbtn tbtn-on-Plant'   onclick='toggleType(""Plant"")'>🏭 Plant</button>" &
     "<button id='btnVirtual' class='tbtn tbtn-on-Virtual' onclick='toggleVirtual()'>🌐 Virtual</button>" &
     "</div>" &
+
     "<div class='legend'><div class='legend-title'>Location Type</div>" &
-    "<div class='li'><div class='ld ld-wh'></div>Warehouse</div>" &
-    "<div class='li'><div class='ld ld-3pl'></div>3PL Logistic</div>" &
-    "<div class='li'><div class='ld ld-office'></div>Office</div>" &
-    "<div class='li'><div class='ld ld-plant'></div>Plant</div>" &
+    "<div class='li'><div class='ld ld-WH'></div>Warehouse</div>" &
+    "<div class='li'><div class='ld ld-3PL'></div>3PL Logistic</div>" &
+    "<div class='li'><div class='ld ld-Office'></div>Office</div>" &
+    "<div class='li'><div class='ld ld-Plant'></div>Plant</div>" &
     "</div>" &
     "<div id='counter'>Showing <b id='cnt'>0</b> locations</div>" &
+
     "<div id='virtualPanel'>" &
-    "<div id='vHeader'><h3>🌐 Virtual Locations</h3><p>No physical coordinates</p><button id='vClose' onclick='toggleVirtual()'>×</button></div>" &
-    "<div id='vList'></div>" &
+    "<div id='virtualHeader'><h3>🌐 Virtual Locations</h3><p>No physical coordinates</p>" &
+    "<button id='virtualClose' onclick='toggleVirtual()'>×</button></div>" &
+    "<div id='virtualList'></div>" &
     "</div>" &
+
     "<script>" &
     "function hideLoader(){document.getElementById('loader').style.display='none';}" &
     "setTimeout(hideLoader,5000);" &
+
     "var map=L.map('map',{zoomControl:false}).setView([25.7,-100.3],4);" &
-    "L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{attribution:'© Nidec'}).addTo(map);" &
+    "L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{attribution:'© Nidec',maxZoom:18}).addTo(map);" &
     "map.once('load',hideLoader);" &
     "L.control.zoom({position:'bottomleft'}).addTo(map);" &
+
     "function makeIcon(t){" &
     "var ic='icon-'+t;var pc='pulse-'+t;" &
     "var svgs={" &
@@ -198,20 +223,26 @@ VAR _HTML =
     "};" &
     "var sv=svgs[t]||svgs['Plant'];" &
     "return L.divIcon({html:'<div class=""icon-wrap""><div class=""pulse-ring '+pc+'""></div><div class=""icon-core '+ic+'"">'+sv+'</div></div>',className:'',iconSize:[40,40],iconAnchor:[20,20],popupAnchor:[0,-24]});}" &
+
     "var markers=[];var allMarkers=[];var typeOn={WH:true,Plant:true,Office:true,'3PL':true};" &
     "var virtualData=[];var virtualVisible=false;" &
+
     _DataPoints &
     _VirtualCards &
+
     "hideLoader();" &
     "document.getElementById('cnt').textContent=markers.length;" &
     "var grp=L.featureGroup(markers);" &
     "if(grp.getLayers().length>0){map.fitBounds(grp.getBounds().pad(0.15));}" &
+
     "function updateCnt(){document.getElementById('cnt').textContent=allMarkers.filter(function(x){return map.hasLayer(x.marker);}).length;}" &
+
     "function toggleType(t){" &
     "typeOn[t]=!typeOn[t];" &
     "document.getElementById('btn'+t).className=typeOn[t]?'tbtn tbtn-on-'+t:'tbtn tbtn-off';" &
     "allMarkers.forEach(function(x){if(x.type===t){typeOn[t]?map.addLayer(x.marker):map.removeLayer(x.marker);}});" &
     "updateCnt();}" &
+
     "function toggleVirtual(){" &
     "virtualVisible=!virtualVisible;" &
     "var panel=document.getElementById('virtualPanel');" &
@@ -219,13 +250,15 @@ VAR _HTML =
     "if(virtualVisible){" &
     "panel.style.display='flex';" &
     "btn.className='tbtn tbtn-on-Virtual';" &
-    "var list=document.getElementById('vList');list.innerHTML='';" &
-    "if(!virtualData.length){list.innerHTML='<p style=""padding:20px;color:#aaa;text-align:center;font-size:13px;"">No virtual locations</p>';return;}" &
+    "var list=document.getElementById('virtualList');" &
+    "list.innerHTML='';" &
+    "if(virtualData.length===0){list.innerHTML='<p style=""padding:20px;color:#aaa;text-align:center;font-size:13px;"">No virtual locations</p>';return;}" &
     "virtualData.forEach(function(v){" &
     "var c=document.createElement('div');c.className='vc';" &
-    "c.innerHTML='<div class=""vc-top""><div class=""vc-site"">'+v.site+'</div><div class=""vc-name"">'+v.name+'</div></div><div class=""vc-body""><div class=""vc-kpi""><div class=""vc-label"">💰 Inventory Cost</div><div class=""vc-val"">'+v.cost+'</div></div><div class=""vc-div""></div><div class=""vc-kpi""><div class=""vc-label"">📈 Total Sales</div><div class=""vc-val-g"">'+v.sales+'</div></div></div>';" &
+    "c.innerHTML='<div class=""vc-top""><div class=""vc-site"">'+v.site+'</div><div class=""vc-name"">'+v.name+'</div></div><div class=""vc-body""><div class=""vc-kpi""><div class=""vc-label"">💰 Inventory Cost</div><div class=""vc-val"">'+v.cost+'</div></div><div class=""vc-div""></div><div class=""vc-kpi""><div class=""vc-label"">📈 Total Sales</div><div class=""vc-val-green"">'+v.sales+'</div></div></div>';" &
     "list.appendChild(c);});" &
     "}else{panel.style.display='none';btn.className='tbtn tbtn-off';}}" &
+
     "var sb=document.getElementById('searchBox'),sr=document.getElementById('searchResults');" &
     "sb.addEventListener('input',function(){" &
     "var q=this.value.toLowerCase().trim();sr.innerHTML='';" &
