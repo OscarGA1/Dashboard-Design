@@ -5,7 +5,8 @@ VAR _Tabla =
         NOT ISBLANK ( 'General Information'[Latitude] ) &&
         NOT ISBLANK ( 'General Information'[Longitude] ) &&
         'General Information'[Latitude] <> 0 &&
-        'General Information'[Longitude] <> 0
+        'General Information'[Longitude] <> 0 &&
+        'General Information'[Type] <> "Virtual"
     )
 
 VAR _TablaVirtual =
@@ -61,7 +62,7 @@ VAR _HTML =
     ".pulse-3PL{border:2px solid rgba(230,126,34,0.8);}" &
     ".pulse-Office{border:2px solid rgba(142,68,173,0.8);}" &
     "@keyframes pulse{0%{transform:scale(0.9);opacity:1;}70%{transform:scale(1.8);opacity:0;}100%{transform:scale(0.9);opacity:0;}}" &
-    ".icon-core{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(0,0,0,0.32);transition:transform 0.2s,box-shadow 0.2s;}" &
+    ".icon-core{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(0,0,0,0.32);}" &
     ".icon-Plant{background:linear-gradient(145deg,#1E3A5F,#3a7bd5);}" &
     ".icon-WH{background:linear-gradient(145deg,#1A4731,#27ae60);}" &
     ".icon-3PL{background:linear-gradient(145deg,#7d3c00,#e67e22);}" &
@@ -175,60 +176,49 @@ VAR _HTML =
     "return L.divIcon({html:'<div class=""icon-wrap""><div class=""pulse-ring '+pc+'""></div><div class=""icon-core '+ic+'"">'+sv+'</div></div>',className:'',iconSize:[40,40],iconAnchor:[20,20],popupAnchor:[0,-24]});}" &
     "function makeClusterIcon(n){" &
     "return L.divIcon({html:'<div style=""background:rgba(30,58,95,0.88);color:white;border-radius:50%;width:38px;height:38px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;box-shadow:0 3px 12px rgba(0,0,0,0.3);border:2px solid rgba(255,255,255,0.4)"">'+n+'</div>',className:'',iconSize:[38,38],iconAnchor:[19,19]});}" &
-    "var allMarkers=[];var markerObjects=[];" &
+    "var allMarkers=[];var clusterMarkers=[];" &
     "rawData.forEach(function(d){" &
-    "if(!typeOn[d.type])return;" &
-    "var m=L.marker([d.lat,d.lon],{icon:makeIcon(d.type)}).addTo(map);" &
+    "var m=L.marker([d.lat,d.lon],{icon:makeIcon(d.type)});" &
+    "if(typeOn[d.type])m.addTo(map);" &
     "m.bindPopup('<div class=""pc""><div class=""pc-header pc-'+d.typeLow+'""><span class=""pc-badge"">'+d.type+'</span><div class=""pc-site"">'+d.site+'</div><div class=""pc-name"">'+d.name+'</div></div><div class=""pc-body""><div class=""pc-row""><span class=""pc-label"">💰 Inventory Cost</span><span class=""pc-val"">'+d.cost+'</span></div><div class=""pc-sep""></div><div class=""pc-row""><span class=""pc-label"">📈 Total Sales</span><span class=""pc-val kpi-green"">'+d.sales+'</span></div></div></div>',{maxWidth:260,minWidth:220});" &
     "m.on('mouseover',function(){this.openPopup();});" &
-    "allMarkers.push({marker:m,name:d.nameLow,site:d.siteLow,type:d.type,displayName:d.name,displaySite:d.site});" &
-    "markerObjects.push(m);" &
-    "});" &
-    "document.getElementById('cnt').textContent=markerObjects.length;" &
-    "var grp=L.featureGroup(markerObjects);" &
+    "allMarkers.push({marker:m,name:d.nameLow,site:d.siteLow,type:d.type,displayName:d.name,displaySite:d.site,active:true});});" &
+    "function updateCnt(){" &
+    "document.getElementById('cnt').textContent=allMarkers.filter(function(x){return typeOn[x.type];}).length;}" &
+    "updateCnt();" &
+    "var grp=L.featureGroup(allMarkers.map(function(x){return x.marker;}));" &
     "if(grp.getLayers().length>0){map.fitBounds(grp.getBounds().pad(0.15));}" &
-
-    "/* ── Clustering manual ── */" &
-    "var clusterMarkers=[];" &
-    "function getPixelPos(latlng){return map.latLngToContainerPoint(latlng);}" &
     "function doClustering(){" &
     "clusterMarkers.forEach(function(c){map.removeLayer(c);});clusterMarkers=[];" &
-    "var zoom=map.getZoom();if(zoom>=9){return;}" &
+    "var zoom=map.getZoom();if(zoom>=9){" &
+    "allMarkers.forEach(function(x){if(typeOn[x.type])map.addLayer(x.marker);});return;}" &
     "var radius=zoom<=4?120:zoom<=6?90:60;" &
-    "var visible=allMarkers.filter(function(x){return map.hasLayer(x.marker);});" &
-    "var used=[];" &
-    "visible.forEach(function(a,i){" &
+    "var active=allMarkers.filter(function(x){return typeOn[x.type];});" &
+    "active.forEach(function(x){map.removeLayer(x.marker);});" &
+    "var used=new Array(active.length).fill(false);" &
+    "active.forEach(function(a,i){" &
     "if(used[i])return;" &
     "var group=[a];used[i]=true;" &
-    "var pa=getPixelPos(a.marker.getLatLng());" &
-    "visible.forEach(function(b,j){" &
+    "var pa=map.latLngToContainerPoint(a.marker.getLatLng());" &
+    "active.forEach(function(b,j){" &
     "if(i===j||used[j])return;" &
-    "var pb=getPixelPos(b.marker.getLatLng());" &
+    "var pb=map.latLngToContainerPoint(b.marker.getLatLng());" &
     "var dx=pa.x-pb.x,dy=pa.y-pb.y;" &
     "if(Math.sqrt(dx*dx+dy*dy)<radius){group.push(b);used[j]=true;}" &
     "});" &
-    "if(group.length>1){" &
-    "group.forEach(function(x){map.removeLayer(x.marker);});" &
+    "if(group.length===1){map.addLayer(group[0].marker);}" &
+    "else{" &
     "var avgLat=group.reduce(function(s,x){return s+x.marker.getLatLng().lat;},0)/group.length;" &
     "var avgLon=group.reduce(function(s,x){return s+x.marker.getLatLng().lng;},0)/group.length;" &
     "var cm=L.marker([avgLat,avgLon],{icon:makeClusterIcon(group.length)}).addTo(map);" &
-    "cm.on('click',function(){" &
-    "var bounds=L.latLngBounds(group.map(function(x){return x.marker.getLatLng();}));" &
-    "map.fitBounds(bounds.pad(0.3));});" &
-    "clusterMarkers.push(cm);" &
-    "}});" &
+    "cm.on('click',function(){map.fitBounds(L.latLngBounds(group.map(function(x){return x.marker.getLatLng();})).pad(0.3));});" &
+    "clusterMarkers.push(cm);}});" &
     "}" &
-    "map.on('zoomend moveend',function(){" &
-    "allMarkers.forEach(function(x){if(typeOn[x.type]){map.addLayer(x.marker);}});" &
+    "map.on('zoomend moveend',doClustering);" &
     "doClustering();" &
-    "});" &
-    "doClustering();" &
-
-    "function updateCnt(){document.getElementById('cnt').textContent=allMarkers.filter(function(x){return map.hasLayer(x.marker);}).length;}" &
     "function toggleType(t){" &
     "typeOn[t]=!typeOn[t];" &
     "document.getElementById('btn'+t).className=typeOn[t]?'tbtn tbtn-on-'+t:'tbtn tbtn-off';" &
-    "allMarkers.forEach(function(x){if(x.type===t){typeOn[t]?map.addLayer(x.marker):map.removeLayer(x.marker);}});" &
     "doClustering();updateCnt();}" &
     "function toggleVirtual(){" &
     "virtualVisible=!virtualVisible;" &
