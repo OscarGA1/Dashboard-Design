@@ -24,7 +24,7 @@ VAR _DataPoints =
         VAR _siteLow  = LOWER ( _site )
         RETURN
             "(function(){" &
-                "var m=L.marker([" & _lat & "," & _lon & "],{icon:makeIcon('" & _itype & "')}).addTo(map);" &
+                "var m=L.marker([" & _lat & "," & _lon & "],{icon:makeIcon('" & _itype & "')});" &
                 "m.bindPopup(" &
                     "'<div class=""pc"">" &
                         "<div class=""pc-header pc-" & _itypeLow & """>" &
@@ -41,7 +41,7 @@ VAR _DataPoints =
                     "{maxWidth:260,minWidth:220}" &
                 ");" &
                 "m.on('mouseover',function(){this.openPopup();});" &
-                "markers.push(m);" &
+                "clusterGroup.addLayer(m);" &
                 "allMarkers.push({marker:m,name:'" & _nameLow & "',site:'" & _siteLow & "',type:'" & _itype & "',displayName:'" & _locname & "',displaySite:'" & _site & "'});" &
             "})();",
         " "
@@ -51,11 +51,24 @@ VAR _HTML =
     "data:text/html;charset=utf-8," &
     "<!DOCTYPE html><html><head><meta charset='UTF-8'>" &
     "<link rel='stylesheet' href='https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'/>" &
+    "<link rel='stylesheet' href='https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css'/>" &
+    "<link rel='stylesheet' href='https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css'/>" &
     "<script src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'></script>" &
+    "<script src='https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js'></script>" &
     "<style>" &
     "*{margin:0;padding:0;box-sizing:border-box;}" &
     "body{font-family:Segoe UI,sans-serif;}" &
     "#map{height:100vh;width:100vw;}" &
+
+    "/* Cluster styles */" &
+    ".marker-cluster{background-clip:padding-box;border-radius:50%;}" &
+    ".marker-cluster div{width:34px;height:34px;margin:3px;border-radius:50%;text-align:center;font:bold 13px Segoe UI,sans-serif;display:flex;align-items:center;justify-content:center;color:white;box-shadow:0 3px 12px rgba(0,0,0,0.3);}" &
+    ".marker-cluster-small{background:rgba(30,58,95,0.18);}" &
+    ".marker-cluster-small div{background:linear-gradient(135deg,#1E3A5F,#3a7bd5);}" &
+    ".marker-cluster-medium{background:rgba(122,58,26,0.18);}" &
+    ".marker-cluster-medium div{background:linear-gradient(135deg,#7A3A1A,#e67e22);}" &
+    ".marker-cluster-large{background:rgba(100,0,0,0.18);}" &
+    ".marker-cluster-large div{background:linear-gradient(135deg,#7B0000,#c0392b);}" &
 
     "/* Icon wraps */" &
     ".icon-wrap{width:40px;height:40px;position:relative;display:flex;align-items:center;justify-content:center;}" &
@@ -168,6 +181,22 @@ VAR _HTML =
     "L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{attribution:'© Nidec'}).addTo(map);" &
     "L.control.zoom({position:'bottomleft'}).addTo(map);" &
 
+    "var clusterGroup=L.markerClusterGroup({" &
+    "maxClusterRadius:60," &
+    "showCoverageOnHover:false," &
+    "zoomToBoundsOnClick:true," &
+    "spiderfyOnMaxZoom:true," &
+    "iconCreateFunction:function(cluster){" &
+    "var count=cluster.getChildCount();" &
+    "var size=count<10?'small':count<50?'medium':'large';" &
+    "return L.divIcon({" &
+    "html:'<div><span>'+count+'</span></div>'," &
+    "className:'marker-cluster marker-cluster-'+size," &
+    "iconSize:L.point(40,40)" &
+    "});}" &
+    "});" &
+    "map.addLayer(clusterGroup);" &
+
     "function makeIcon(t){" &
     "var ic='icon-'+t;" &
     "var pc='pulse-'+t;" &
@@ -190,19 +219,23 @@ VAR _HTML =
     "popupAnchor:[0,-24]" &
     "});}" &
 
-    "var markers=[];var allMarkers=[];var typeOn={Plant:true,WH:true,Office:true,'3PL':true,Virtual:true};" &
+    "var allMarkers=[];var typeOn={Plant:true,WH:true,Office:true,'3PL':true,Virtual:true};" &
     _DataPoints &
-    "document.getElementById('cnt').textContent=markers.length;" &
-    "var grp=L.featureGroup(markers);" &
-    "if(grp.getLayers().length>0){map.fitBounds(grp.getBounds().pad(0.15));}" &
+    "document.getElementById('cnt').textContent=allMarkers.length;" &
 
-    "function updateCnt(){document.getElementById('cnt').textContent=allMarkers.filter(function(x){return map.hasLayer(x.marker);}).length;}" &
+    "function updateCnt(){" &
+    "document.getElementById('cnt').textContent=allMarkers.filter(function(x){" &
+    "return typeOn[x.type];}).length;}" &
 
     "function toggleType(t){" &
     "typeOn[t]=!typeOn[t];" &
     "var btnId=t==='3PL'?'btn3PL':'btn'+t;" &
     "document.getElementById(btnId).className=typeOn[t]?'tbtn tbtn-on-'+t:'tbtn tbtn-off';" &
-    "allMarkers.forEach(function(x){if(x.type===t){typeOn[t]?map.addLayer(x.marker):map.removeLayer(x.marker);}});" &
+    "allMarkers.forEach(function(x){" &
+    "if(x.type===t){" &
+    "if(typeOn[t]){clusterGroup.addLayer(x.marker);}" &
+    "else{clusterGroup.removeLayer(x.marker);}" &
+    "}});" &
     "updateCnt();}" &
 
     "var sb=document.getElementById('searchBox'),sr=document.getElementById('searchResults');" &
@@ -215,7 +248,9 @@ VAR _HTML =
     "hits.forEach(function(x){" &
     "var d=document.createElement('div');d.className='sr-item';" &
     "d.innerHTML='<div class=""sr-dot sr-dot-'+x.type+'""></div><div><div class=""sr-name"">'+x.displayName+'</div><div class=""sr-site"">'+x.displaySite+'</div></div>';" &
-    "d.onclick=function(){map.setView(x.marker.getLatLng(),10,{animate:true});setTimeout(function(){x.marker.openPopup();},500);sb.value=x.displayName;sr.style.display='none';};" &
+    "d.onclick=function(){" &
+    "clusterGroup.zoomToShowLayer(x.marker,function(){x.marker.openPopup();});" &
+    "sb.value=x.displayName;sr.style.display='none';};" &
     "sr.appendChild(d);});" &
     "sr.style.display='block';});" &
     "document.addEventListener('click',function(e){if(!document.getElementById('searchWrap').contains(e.target)){sr.style.display='none';}});" &
