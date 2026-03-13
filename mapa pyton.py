@@ -1,4 +1,4 @@
-Mapa_Nidec_HTML = 
+2Mapa_Nidec_HTML = 
 VAR _Tabla =
     FILTER (
         'General Information',
@@ -33,15 +33,14 @@ VAR _DataPoints =
                             "<div class=""pc-name"">" & _locname & "</div>" &
                         "</div>" &
                         "<div class=""pc-body"">" &
-                            "<div class=""pc-row""><span class=""pc-label"">💰 Inventory Cost</span><span class=""pc-val"">" & _cost & "</span></div>" &
+                            "<div class=""pc-row""><span class=""pc-label"">💰 Current Inventory Cost</span><span class=""pc-val"">" & _cost & "</span></div>" &
                             "<div class=""pc-sep""></div>" &
-                            "<div class=""pc-row""><span class=""pc-label"">📈 Total Sales</span><span class=""pc-val kpi-green"">" & _sales & "</span></div>" &
+                            "<div class=""pc-row""><span class=""pc-label"">📈 Total Sales of Current Month</span><span class=""pc-val kpi-green"">" & _sales & "</span></div>" &
                         "</div>" &
                     "</div>'," &
                     "{maxWidth:260,minWidth:220}" &
                 ");" &
                 "m.on('mouseover',function(){this.openPopup();});" &
-                "clusterGroup.addLayer(m);" &
                 "allMarkers.push({marker:m,name:'" & _nameLow & "',site:'" & _siteLow & "',type:'" & _itype & "',displayName:'" & _locname & "',displaySite:'" & _site & "'});" &
             "})();",
         " "
@@ -51,24 +50,11 @@ VAR _HTML =
     "data:text/html;charset=utf-8," &
     "<!DOCTYPE html><html><head><meta charset='UTF-8'>" &
     "<link rel='stylesheet' href='https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'/>" &
-    "<link rel='stylesheet' href='https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css'/>" &
-    "<link rel='stylesheet' href='https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css'/>" &
     "<script src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'></script>" &
-    "<script src='https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js'></script>" &
     "<style>" &
     "*{margin:0;padding:0;box-sizing:border-box;}" &
     "body{font-family:Segoe UI,sans-serif;}" &
     "#map{height:100vh;width:100vw;}" &
-
-    "/* Cluster styles */" &
-    ".marker-cluster{background-clip:padding-box;border-radius:50%;}" &
-    ".marker-cluster div{width:34px;height:34px;margin:3px;border-radius:50%;text-align:center;font:bold 13px Segoe UI,sans-serif;display:flex;align-items:center;justify-content:center;color:white;box-shadow:0 3px 12px rgba(0,0,0,0.3);}" &
-    ".marker-cluster-small{background:rgba(30,58,95,0.18);}" &
-    ".marker-cluster-small div{background:linear-gradient(135deg,#1E3A5F,#3a7bd5);}" &
-    ".marker-cluster-medium{background:rgba(122,58,26,0.18);}" &
-    ".marker-cluster-medium div{background:linear-gradient(135deg,#7A3A1A,#e67e22);}" &
-    ".marker-cluster-large{background:rgba(100,0,0,0.18);}" &
-    ".marker-cluster-large div{background:linear-gradient(135deg,#7B0000,#c0392b);}" &
 
     "/* Icon wraps */" &
     ".icon-wrap{width:40px;height:40px;position:relative;display:flex;align-items:center;justify-content:center;}" &
@@ -181,62 +167,106 @@ VAR _HTML =
     "L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{attribution:'© Nidec'}).addTo(map);" &
     "L.control.zoom({position:'bottomleft'}).addTo(map);" &
 
-    "var clusterGroup=L.markerClusterGroup({" &
-    "maxClusterRadius:60," &
-    "showCoverageOnHover:false," &
-    "zoomToBoundsOnClick:true," &
-    "spiderfyOnMaxZoom:true," &
-    "iconCreateFunction:function(cluster){" &
-    "var count=cluster.getChildCount();" &
-    "var size=count<10?'small':count<50?'medium':'large';" &
-    "return L.divIcon({" &
-    "html:'<div><span>'+count+'</span></div>'," &
-    "className:'marker-cluster marker-cluster-'+size," &
-    "iconSize:L.point(40,40)" &
-    "});}" &
-    "});" &
-    "map.addLayer(clusterGroup);" &
-
     "function makeIcon(t){" &
-    "var ic='icon-'+t;" &
-    "var pc='pulse-'+t;" &
-    "var sv;" &
+    "var ic='icon-'+t;var pc='pulse-'+t;var sv;" &
     "if(t==='WH'){" &
-    "sv='<svg viewBox=""0 0 24 24""><path d=""M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z""/></svg>';}" &
+    "sv='<svg viewBox=""0 0 24 24""><path d=""M1 21V8l11-6 11 6v13H1zm2-2h18V9.25L12 4.15 3 9.25V19zm4-1h10v-5H7v5zm0-7h2V9H7v2zm4 0h2V9h-2v2zm4 0h2V9h-2v2zm-8 5h2v-3H7v3zm4 0h2v-3h-2v3zm4 0h2v-3h-2v3z""/></svg>';}" &
     "else if(t==='Office'){" &
-    "sv='<svg viewBox=""0 0 24 24""><path d=""M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z""/></svg>';}" &
+    "sv='<svg viewBox=""0 0 24 24""><path d=""M5 3h14v18H5V3zm2 2v14h10V5H7zm2 2h2v2H9V7zm4 0h2v2h-2V7zm-4 4h2v2H9v-2zm4 0h2v2h-2v-2zm-4 4h2v2H9v-2zm4 0h2v2h-2v-2zM9 17h6v4H9v-4z""/></svg>';}" &
     "else if(t==='3PL'){" &
-    "sv='<svg viewBox=""0 0 24 24""><path d=""M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4zM6 18.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm13.5-9l1.96 2.5H17V9.5h2.5zm-1.5 9c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z""/></svg>';}" &
+    "sv='<svg viewBox=""0 0 24 24""><path d=""M3 3h18v3H3V3zm0 4h18v1H3V7zm1 2h16v12H4V9zm2 2v8h12v-8H6zm1 1h4v3H7v-3zm6 0h4v3h-4v-3zm-6 4h4v3H7v-3zm6 0h4v3h-4v-3z""/></svg>';}" &
     "else if(t==='Virtual'){" &
     "sv='<svg viewBox=""0 0 24 24""><path d=""M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2zm-1 17.93V18c0-.55.45-1 1-1s1 .45 1 1v1.93A8.01 8.01 0 0 1 4.07 13H6c.55 0 1 .45 1 1s-.45 1-1 1H4.07zM4.07 11H6c.55 0 1-.45 1-1s-.45-1-1-1H4.07A8.01 8.01 0 0 1 11 4.07V6c0 .55.45 1 1 1s1-.45 1-1V4.07A8.01 8.01 0 0 1 19.93 11H18c-.55 0-1 .45-1 1s.45 1 1 1h1.93A8.01 8.01 0 0 1 13 19.93V18c0-.55-.45-1-1-1s-1 .45-1 1v1.93A8.01 8.01 0 0 1 4.07 11z""/></svg>';}" &
     "else{" &
-    "sv='<svg viewBox=""0 0 24 24""><path d=""M10 20h4V4h-4v16zm-6 0h4v-8H4v8zm12-12v12h4V8h-4z""/></svg>';}" &
+    "sv='<svg viewBox=""0 0 24 24""><path d=""M2 20V8.5L12 2l10 6.5V20H2zm2-2h16V9.6L12 4.15 4 9.6V18zm3-1h2v-3H7v3zm4 0h2v-3h-2v3zm4 0h2v-3h-2v3zM7 13h2v-2H7v2zm4 0h2v-2h-2v2zm4 0h2v-2h-2v2z""/></svg>';}" &
+    "return L.divIcon({html:'<div class=""icon-wrap""><div class=""pulse-ring '+pc+'""></div><div class=""icon-core '+ic+'"">'+sv+'</div></div>',className:'',iconSize:[40,40],iconAnchor:[20,20],popupAnchor:[0,-24]});}" &
+
+    "function makeClusterIcon(count,types){" &
+    "var colors={Plant:'#3a7bd5',WH:'#27ae60',Office:'#9b59b6','3PL':'#e67e22',Virtual:'#95a5a6'};" &
+    "var dominant=Object.keys(types).reduce(function(a,b){return types[a]>types[b]?a:b;});" &
+    "var col=colors[dominant]||'#3a7bd5';" &
+    "var size=count<5?38:count<10?46:54;" &
+    "var fs=count<5?13:count<10?15:17;" &
     "return L.divIcon({" &
-    "html:'<div class=""icon-wrap""><div class=""pulse-ring '+pc+'""></div><div class=""icon-core '+ic+'"">'+sv+'</div></div>'," &
+    "html:'<div style=""width:'+size+'px;height:'+size+'px;border-radius:50%;background:'+col+';border:3px solid white;box-shadow:0 4px 16px rgba(0,0,0,0.35);display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:'+fs+'px;font-family:Segoe UI,sans-serif;"">'+count+'</div>'," &
     "className:''," &
-    "iconSize:[40,40]," &
-    "iconAnchor:[20,20]," &
-    "popupAnchor:[0,-24]" &
+    "iconSize:[size,size]," &
+    "iconAnchor:[size/2,size/2]" &
     "});}" &
 
-    "var allMarkers=[];var typeOn={Plant:true,WH:true,Office:true,'3PL':true,Virtual:true};" &
-    _DataPoints &
-    "document.getElementById('cnt').textContent=allMarkers.length;" &
+    "var allMarkers=[];var clusterMarkers=[];var typeOn={Plant:true,WH:true,Office:true,'3PL':true,Virtual:true};" &
+    "var CLUSTER_RADIUS=60;var CLUSTER_MIN=3;var CLUSTER_MAX_ZOOM=6;" &
 
-    "function updateCnt(){" &
-    "document.getElementById('cnt').textContent=allMarkers.filter(function(x){" &
-    "return typeOn[x.type];}).length;}" &
+    _DataPoints &
+
+    "function runClustering(){" &
+    "clusterMarkers.forEach(function(c){map.removeLayer(c);});clusterMarkers=[];" &
+    "allMarkers.forEach(function(x){map.removeLayer(x.marker);});" &
+    "var active=allMarkers.filter(function(x){return typeOn[x.type];});" &
+    "var currentZoom=map.getZoom();" &
+
+    /* If zoom > threshold, show all individual markers, no clustering */
+    "if(currentZoom>CLUSTER_MAX_ZOOM){" &
+    "active.forEach(function(x){map.addLayer(x.marker);});" &
+    "document.getElementById('cnt').textContent=active.length;" &
+    "return;}" &
+
+    "var assigned=new Array(active.length).fill(false);" &
+    "var clusters=[];" &
+    "for(var i=0;i<active.length;i++){" &
+    "if(assigned[i])continue;" &
+    "var group=[i];assigned[i]=true;" &
+    "var pi=map.latLngToContainerPoint(active[i].marker.getLatLng());" &
+    "for(var j=i+1;j<active.length;j++){" &
+    "if(assigned[j])continue;" &
+    "var pj=map.latLngToContainerPoint(active[j].marker.getLatLng());" &
+    "var dx=pi.x-pj.x,dy=pi.y-pj.y;" &
+    "if(Math.sqrt(dx*dx+dy*dy)<CLUSTER_RADIUS){group.push(j);assigned[j]=true;}" &
+    "}clusters.push(group);}" &
+
+    "var cnt=0;" &
+    "clusters.forEach(function(group){" &
+
+    /* Only cluster if group has >= CLUSTER_MIN markers */
+    "if(group.length<CLUSTER_MIN){" &
+    "group.forEach(function(idx){map.addLayer(active[idx].marker);});cnt+=group.length;" &
+    "}else{" &
+    "var sumLat=0,sumLng=0,types={};" &
+    "group.forEach(function(idx){" &
+    "var ll=active[idx].marker.getLatLng();" &
+    "sumLat+=ll.lat;sumLng+=ll.lng;" &
+    "types[active[idx].type]=(types[active[idx].type]||0)+1;" &
+    "});" &
+    "var cLat=sumLat/group.length,cLng=sumLng/group.length;" &
+    "var cm=L.marker([cLat,cLng],{icon:makeClusterIcon(group.length,types)}).addTo(map);" &
+    "(function(g){cm.on('click',function(){" &
+    "var lats=g.map(function(i){return active[i].marker.getLatLng().lat;});" &
+    "var lngs=g.map(function(i){return active[i].marker.getLatLng().lng;});" &
+    "var minLat=Math.min.apply(null,lats),maxLat=Math.max.apply(null,lats);" &
+    "var minLng=Math.min.apply(null,lngs),maxLng=Math.max.apply(null,lngs);" &
+    /* If all points at same location, force zoom in by +3 levels */
+    "if(maxLat-minLat<0.01&&maxLng-minLng<0.01){" &
+    "map.setView([lats[0],lngs[0]],Math.min(map.getZoom()+3,18),{animate:true});" &
+    "}else{" &
+    "map.fitBounds([[minLat,minLng],[maxLat,maxLng]],{padding:[80,80],animate:true,maxZoom:14});" &
+    "}" &
+    "});})(group);" &
+    "clusterMarkers.push(cm);cnt+=group.length;" &
+    "}" &
+    "});" &
+    "document.getElementById('cnt').textContent=cnt;}" &
+
+    "map.on('zoomend moveend',runClustering);" &
+
+    "var grp=L.featureGroup(allMarkers.map(function(x){return x.marker;}));" &
+    "if(grp.getLayers().length>0){map.fitBounds(grp.getBounds().pad(0.15),{animate:false});}" &
+    "setTimeout(function(){runClustering();},100);" &
 
     "function toggleType(t){" &
     "typeOn[t]=!typeOn[t];" &
     "var btnId=t==='3PL'?'btn3PL':'btn'+t;" &
     "document.getElementById(btnId).className=typeOn[t]?'tbtn tbtn-on-'+t:'tbtn tbtn-off';" &
-    "allMarkers.forEach(function(x){" &
-    "if(x.type===t){" &
-    "if(typeOn[t]){clusterGroup.addLayer(x.marker);}" &
-    "else{clusterGroup.removeLayer(x.marker);}" &
-    "}});" &
-    "updateCnt();}" &
+    "runClustering();}" &
 
     "var sb=document.getElementById('searchBox'),sr=document.getElementById('searchResults');" &
     "sb.addEventListener('input',function(){" &
@@ -248,9 +278,7 @@ VAR _HTML =
     "hits.forEach(function(x){" &
     "var d=document.createElement('div');d.className='sr-item';" &
     "d.innerHTML='<div class=""sr-dot sr-dot-'+x.type+'""></div><div><div class=""sr-name"">'+x.displayName+'</div><div class=""sr-site"">'+x.displaySite+'</div></div>';" &
-    "d.onclick=function(){" &
-    "clusterGroup.zoomToShowLayer(x.marker,function(){x.marker.openPopup();});" &
-    "sb.value=x.displayName;sr.style.display='none';};" &
+    "d.onclick=function(){map.setView(x.marker.getLatLng(),10,{animate:true});setTimeout(function(){runClustering();x.marker.openPopup();},600);sb.value=x.displayName;sr.style.display='none';};" &
     "sr.appendChild(d);});" &
     "sr.style.display='block';});" &
     "document.addEventListener('click',function(e){if(!document.getElementById('searchWrap').contains(e.target)){sr.style.display='none';}});" &
